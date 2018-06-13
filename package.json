@@ -1,0 +1,15 @@
+{
+  "name": "license-crawler",
+  "version": "1.0.0",
+  "description": "",
+  "main": "generate.js",
+  "scripts": {
+    "start": "node generate.js"
+  },
+  "author": "Richard Ullmann",
+  "license": "ISC",
+  "dependencies": {
+    "license-crawler": "0.0.5",
+    "minimist": "^1.2.0"
+  }
+}
