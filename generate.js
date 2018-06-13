@@ -18,13 +18,13 @@ var args = minimist(process.argv.slice(2), {
 // setting options
 var options = {
   input: args.input,                      // input folder which contains package.json
-  out: './result/reportLicenses.json',           // output file
-  production: false,                      // if true don't check devDependencies
-  statistics: true,                       // generate statistics
+  out: './result/reportLicenses.json',    // output file
+  production: true,                       // if true don't check devDependencies
+  statistics: false,                       // generate statistics
   exclude: [],
   sorted: 'license',                      // 'license' or 'package'
   format: 'json',                         // 'json' or 'txt'
-  htmlFile: './result/' + args.htmlfile,                // output HTML file
+  htmlFile: './result/' + args.htmlfile,  // output HTML file
   showPackagePath: args.showpackagepath,  // 
 };
 
@@ -57,6 +57,8 @@ create();
 // Parse the output file and write it to a html file
 function create() {
 
+  const SPLITREGEX = '##SPLIT##';
+
   function writeFile(file, msg) {
     fs.appendFileSync(file, msg, function(err) {
       if(err) return console.log(err);
@@ -81,7 +83,7 @@ function create() {
   function countArray(searchname) {
     var count = [];
     for(var i = 0; i < map.length; i++) {
-      if(map[i].split('@')[0] == searchname) {
+      if(map[i].split(SPLITREGEX)[0] == searchname) {
         count.push(map[i]);
       }
     }
@@ -89,6 +91,8 @@ function create() {
   }
 
   function isValid(version) {
+    console.log(version);
+
     if (version.match(/[a-zA-Z||]/)) {
       return false;
     }
@@ -98,7 +102,7 @@ function create() {
   function getVersionsFromMap(map) {
     var versions = [];
     for(var i = 0; i < map.length; i++) {
-      var version = map[i].split('@')[1];
+      var version = map[i].split(SPLITREGEX)[1];
       versions.push(version);
     }
     return versions;
@@ -107,7 +111,7 @@ function create() {
   function processVersions() {
     console.log('Processing versions...');
     for(var i = 0; i < map.length; i++) {
-      var sContent = map[i].split('@');
+      var sContent = map[i].split(SPLITREGEX);
       var name = sContent[0];
       var version = sContent[1];
 
@@ -118,7 +122,7 @@ function create() {
           var highestVer = versions.sort(compareVersions)[versions.length - 1];
 
           for(var k = 0; k < items.length; k++) {
-            if(items[k].split('@')[1] == highestVer) {
+            if(items[k].split(SPLITREGEX)[1] == highestVer) {
               var index = items.indexOf(items[k]);
               if (index > -1) items.splice(index, 1);
             }
@@ -138,7 +142,7 @@ function create() {
   function writeLicenses() {
     console.log('Writing to ' + options.htmlFile + '...');
     for(var i = 0; i < map.length; i++) {
-      var sItem = map[i].split('@');
+      var sItem = map[i].split(SPLITREGEX);
       var name = sItem[0];
       var version = sItem[1];
       var path = sItem[2];
@@ -161,11 +165,11 @@ function create() {
 
     for(var pkg in jobj[type]['packages']) {
       var info = jobj[type]['packages'][pkg]['name'].split('@');
-      var name = info[0];
-      var version = info[1];
+      var name = (jobj[type]['packages'][pkg]['name'].startsWith('@') ? '@' + info[1] : info[0]);
+      var version = info[info.length - 1];
       var path = jobj[type]['packages'][pkg]['path'];
 
-      map.push(name + '@' + version + (options.showPackagePath ? '@' + path : ''));
+      map.push(name + SPLITREGEX + version + (options.showPackagePath ? SPLITREGEX + path : ''));
     }
     processVersions();
     writeLicenses();
