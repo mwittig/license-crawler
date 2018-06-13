@@ -17,15 +17,15 @@ var args = minimist(process.argv.slice(2), {
 
 // setting options
 var options = {
-  input: args.input,                      // input folder which contains package.json
-  out: './result/reportLicenses.json',    // output file
-  production: true,                       // if true don't check devDependencies
-  statistics: false,                       // generate statistics
+  input: (args.input.endsWith('/') ? args.input : args.input + '/'),            // input folder which contains package.json
+  out: './result/reportLicenses.json',                                         // output file
+  production: true,                                                            // if true don't check devDependencies
+  statistics: false,                                                           // generate statistics
   exclude: [],
-  sorted: 'license',                      // 'license' or 'package'
-  format: 'json',                         // 'json' or 'txt'
-  htmlFile: './result/' + args.htmlfile,  // output HTML file
-  showPackagePath: args.showpackagepath,  // 
+  sorted: 'license',                                                           // 'license' or 'package'
+  format: 'json',                                                              // 'json' or 'txt'
+  htmlFile: './result/' + args.htmlfile,                                       // output HTML file
+  showPackagePath: args.showpackagepath,                                       // 
 };
 
 // Setup
@@ -91,8 +91,6 @@ function create() {
   }
 
   function isValid(version) {
-    console.log(version);
-
     if (version.match(/[a-zA-Z||]/)) {
       return false;
     }
@@ -146,7 +144,8 @@ function create() {
       var name = sItem[0];
       var version = sItem[1];
       var path = sItem[2];
-      writeFile(options.htmlFile, '<br><br>&emsp; Name: ' + name + '<br>&emsp; Version: ' + version + (options.showPackagePath ? '<br>&emsp; Path: ' + path + '<br>' : ''));
+      writeFile(options.htmlFile, '<tr><td><a href="https://www.npmjs.com/package/' + name + '">' + name + '</a></td><td>' + version + '</td><td>Desc.</td>'
+       + (options.showPackagePath ? '<td>' + path + '</td>' : '') + '</tr>');
     }
     console.log('');
   }
@@ -156,12 +155,15 @@ function create() {
   if(fs.existsSync(options.htmlFile)) fs.unlinkSync(options.htmlFile);
 
   var jobj = JSON.parse(fs.readFileSync(options.out, 'utf8'));
-  writeFile(options.htmlFile, '<html><head><meta charset="UTF-8"></head><body><h1>Licenses</h1>');
+  writeFile(options.htmlFile,
+     '<html><head><meta charset="UTF-8"><style>table, th, td { border: 1px solid grey; } </style></head><body><h1>Licenses</h1>');
 
   for(var type in jobj) {
     console.log('Current license: ' + type);
 
-    writeFile(options.htmlFile, '<b>' + type + '</b><a>');
+    writeFile(options.htmlFile, '<b>' + type + '</b>');
+    writeFile(options.htmlFile, '<table style="width: 100%">' + 
+    '<tr><th>Name</th><th>Version</th><th>Description</th>' + (options.showPackagePath ? '<th>Path</th>': '')+ '</tr>');
 
     for(var pkg in jobj[type]['packages']) {
       var info = jobj[type]['packages'][pkg]['name'].split('@');
@@ -173,7 +175,7 @@ function create() {
     }
     processVersions();
     writeLicenses();
-    writeFile(options.htmlFile, '<br><br>' + '</a>');
+    writeFile(options.htmlFile, '</table><br><br>');
     map = [];
     sleep(200);
   }
