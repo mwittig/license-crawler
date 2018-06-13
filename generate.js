@@ -2,6 +2,7 @@
 var crawler = require('license-crawler');
 var fs = require('fs');
 var minimist = require('minimist');
+var packageinfo = require('./packagecrawler');
 
 // argument options
 var args = minimist(process.argv.slice(2), {
@@ -11,13 +12,13 @@ var args = minimist(process.argv.slice(2), {
   default: { input: './', htmlfile: 'licenses.html', 'showpackagepath': false },
   alias: { i: 'input', h: 'htmlfile', spp: 'showpackagepath' },
   unknown: function() {
-    console.log('\nInvalid argument passed. Running with defaults...\n');
+    console.log('\nInvalid argument passed.\n');
   }
 });
 
 // setting options
 var options = {
-  input: (args.input.endsWith('/') ? args.input : args.input + '/'),            // input folder which contains package.json
+  input: (args.input.endsWith('/') ? args.input : args.input + '/'),           // input folder which contains package.json
   out: './result/reportLicenses.json',                                         // output file
   production: true,                                                            // if true don't check devDependencies
   statistics: false,                                                           // generate statistics
@@ -139,13 +140,25 @@ function create() {
 
   function writeLicenses() {
     console.log('Writing to ' + options.htmlFile + '...');
+    var infos = packageinfo.crawlPackages(options.input, map, SPLITREGEX);
     for(var i = 0; i < map.length; i++) {
       var sItem = map[i].split(SPLITREGEX);
       var name = sItem[0];
       var version = sItem[1];
       var path = sItem[2];
-      writeFile(options.htmlFile, '<tr><td><a href="https://www.npmjs.com/package/' + name + '">' + name + '</a></td><td>' + version + '</td><td>Desc.</td>'
-       + (options.showPackagePath ? '<td>' + path + '</td>' : '') + '</tr>');
+
+      // Info
+      var desc = infos[i].description;
+      var homepage = infos[i].homepage;
+      var repo = infos[i].repo;
+      var repoURL = repo['url'];
+      //
+
+      writeFile(options.htmlFile, '<tr><td><a href="https://www.npmjs.com/package/' + name + '">'
+       + name + '</a></td><td>' + version + '</td><td>' + desc + '</td><td>Repo: '
+        + (repoURL !== undefined ? repoURL : 'Not found.')
+         + '<br>Homepage: ' + (homepage !== undefined ? homepage : 'Not found.') + '</td>'
+          + (options.showPackagePath ? '<td>' + path + '</td>' : '') + '</tr>');
     }
     console.log('');
   }
@@ -161,9 +174,9 @@ function create() {
   for(var type in jobj) {
     console.log('Current license: ' + type);
 
-    writeFile(options.htmlFile, '<b>' + type + '</b>');
+    writeFile(options.htmlFile, '<b>' + type + '</b><br><br>');
     writeFile(options.htmlFile, '<table style="width: 100%">' + 
-    '<tr><th>Name</th><th>Version</th><th>Description</th>' + (options.showPackagePath ? '<th>Path</th>': '')+ '</tr>');
+    '<tr><th>Name</th><th style="width: 5%;">Version</th><th>Description</th><th style="width: 38%;">Homepage & Repository</th>' + (options.showPackagePath ? '<th>Path</th>': '')+ '</tr>');
 
     for(var pkg in jobj[type]['packages']) {
       var info = jobj[type]['packages'][pkg]['name'].split('@');
