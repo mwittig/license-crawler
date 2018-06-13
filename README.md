@@ -18,4 +18,4 @@ Just clone the project and cd into the cloned folder. Type `npm start` to start 
 
 ### Example
 
-    npm start -- --input="C:/Users/%USERNAME%/usn-app" --htmlfile="licenses.html" --showpackagepath false
+    npm start -- --input="C:/Users/%USERNAME%/usn-app/" --htmlfile="licenses.html" --showpackagepath false
